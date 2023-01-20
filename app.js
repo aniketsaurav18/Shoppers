@@ -27,10 +27,9 @@ app.use((req, res, next) => {
       req.user = user;
       next();
     })
-    .catch((err) => {
-      console.log(err);
-    });
+    .catch((err) => console.log(err));
 });
+
 app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 
@@ -42,7 +41,9 @@ User.hasOne(Cart);
 Cart.belongsTo(User);
 Cart.belongsToMany(Product, { through: CartItem });
 Product.belongsToMany(Cart, { through: CartItem });
+
 sequelize
+  // .sync({ force: true })
   .sync()
   .then((result) => {
     return User.findByPk(1);
@@ -50,9 +51,9 @@ sequelize
   })
   .then((user) => {
     if (!user) {
-      return User.create({ name: "max", email: "text@test.com" });
+      return User.create({ name: "Max", email: "test@test.com" });
     }
-    return Promise.resolve(user);
+    return user;
   })
   .then((user) => {
     // console.log(user);

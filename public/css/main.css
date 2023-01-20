@@ -23,10 +23,11 @@ form {
   text-align: center;
 }
 
-.image{
+.image {
   height: 20rem;
 }
-.image img{
+
+.image img {
   height: 100%;
 }
 
