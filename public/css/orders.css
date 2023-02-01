@@ -1,7 +1,7 @@
 .orders {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .orders__item h1 {
@@ -10,9 +10,9 @@
 }
 
 .orders__item {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.26);
-    padding: 1rem;
-    margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.26);
+  padding: 1rem;
+  margin-bottom: 1rem;
 }
 
 .orders__products {
