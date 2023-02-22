@@ -206,7 +206,7 @@ exports.postReset = (req, res, next) => {
             ],
           })
           .then((result) => {
-            console.log(result.header);
+            // console.log(result.header);
           })
           .catch((err) => {
             console.log("email error");
@@ -230,13 +230,43 @@ exports.getNewPassword = (req, res, next) => {
         message = null;
       }
       res.render("auth/new-password", {
-        path: "/reset",
+        path: "/new-password",
         pageTitle: "New Password",
         errorMessage: message,
         userId: user._id.toString(),
+        passwordToken: token,
       });
     })
     .catch((err) => {
+      console.log(err);
+    });
+};
+
+exports.postNewPassword = (req, res, next) => {
+  const newPassword = req.body.password;
+  const userId = req.body.userId;
+  const passwordToken = req.body.passwordToken;
+  let resetUser;
+  User.findOne({
+    resetToken: passwordToken,
+    resetTokenExpiration: { $gt: Date.now() },
+    _id: userId,
+  })
+    .then((user) => {
+      resetUser = user;
+      return bcrypt.hash(newPassword, 12);
+    })
+    .then((hashedPassword) => {
+      resetUser.password = hashedPassword;
+      resetUser.resetToken = undefined;
+      resetUser.resetTokenExpiration = undefined;
+      return resetUser.save();
+    })
+    .then((result) => {
+      res.redirect("/login");
+    })
+    .catch((err) => {
+      console.log("error while setting new password");
       console.log(err);
     });
 };
