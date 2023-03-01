@@ -3,7 +3,9 @@ const bcrypt = require("bcryptjs");
 // const nodemailer = require("nodemailer");
 const mailjet = require("node-mailjet");
 const crypto = require("crypto");
+const { validationResult } = require("express-validator/check");
 
+//mailjet connection to api
 const Mail_jet = mailjet.apiConnect(
   "03dde369a9176b282551f50ce1e15db1",
   "d71edcb03be61c18096112b691c34392"
@@ -17,8 +19,7 @@ sendgridTrasnport.setApiKey(
 );
 const second_api_key =
   "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";
-
- */
+*/
 exports.getLogin = (req, res, next) => {
   let message = req.flash("error");
   if (message.length > 0) {
@@ -31,6 +32,11 @@ exports.getLogin = (req, res, next) => {
     pageTitle: "Login",
     isAuthenticated: false,
     errorMessage: message,
+    oldInput: {
+      email: "",
+      password: "",
+    },
+    validationError: [],
   });
 };
 
@@ -45,17 +51,48 @@ exports.getSignup = (req, res, next) => {
     path: "/signup",
     pageTitle: "Signup",
     errorMessage: message,
+    oldInput: {
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+    validationError: [],
   });
 };
 
 exports.postLogin = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    // console.log(error.array());
+    return res.status(422).render("auth/login", {
+      path: "/login",
+      pageTitle: "Login",
+      isAuthenticated: false,
+      errorMessage: error.array()[0].msg,
+      oldInput: {
+        email: email,
+        password: password,
+      },
+      validationError: error.array(),
+    });
+  }
   User.findOne({ email: email })
     .then((user) => {
       if (!user) {
         req.flash("error", "Invalid email or password.");
-        return res.redirect("/login");
+        return res.status(422).render("auth/login", {
+          path: "/login",
+          pageTitle: "Login",
+          isAuthenticated: false,
+          errorMessage: "Invalid email or password.",
+          oldInput: {
+            email: email,
+            password: password,
+          },
+          validationError: [],
+        });
       }
       bcrypt
         .compare(password, user.password)
@@ -69,7 +106,17 @@ exports.postLogin = (req, res, next) => {
             });
           }
           req.flash("error", "Invalid email or password.");
-          res.redirect("/login");
+          return res.status(422).render("auth/login", {
+            path: "/login",
+            pageTitle: "Login",
+            isAuthenticated: false,
+            errorMessage: "Invalid email or password.",
+            oldInput: {
+              email: email,
+              password: password,
+            },
+            validationError: [],
+          });
         })
         .catch((err) => {
           console.log(err);
@@ -87,55 +134,60 @@ exports.postSignup = (req, res, next) => {
   console.log(email);
   const password = req.body.password;
   const confirmPassword = req.body.confirmPassword;
-  User.findOne({ email: email })
-    .then((userDoc) => {
-      if (userDoc) {
-        req.flash("error", "Email already exist!");
-        return res.redirect("/signup");
-      }
-      return bcrypt
-        .hash(password, 12)
-        .then((hashedPassword) => {
-          const user = new User({
-            email: email,
-            password: hashedPassword,
-            cart: { items: [] },
-          });
-          return user.save();
-        })
-        .then((result) => {
-          //sending email (needs work)
-          Mail_jet.post("send", { version: "v3.1" })
-            .request({
-              Messages: [
+  const error = validationResult(req);
+  if (!error.isEmpty()) {
+    // console.log(error.array());
+    return res.status(422).render("auth/signup", {
+      path: "/signup",
+      pageTitle: "Signup",
+      errorMessage: error.array()[0].msg,
+      oldInput: {
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword,
+      },
+      validationError: error.array(),
+    });
+  }
+  bcrypt
+    .hash(password, 12)
+    .then((hashedPassword) => {
+      const user = new User({
+        email: email,
+        password: hashedPassword,
+        cart: { items: [] },
+      });
+      return user.save();
+    })
+    .then((result) => {
+      //sending email (needs work)
+      Mail_jet.post("send", { version: "v3.1" })
+        .request({
+          Messages: [
+            {
+              From: {
+                Email: "mailittoaniket@gmail.com",
+                Name: "Shopers",
+              },
+              To: [
                 {
-                  From: {
-                    Email: "mailittoaniket@gmail.com",
-                    Name: "Shopers",
-                  },
-                  To: [
-                    {
-                      Email: email,
-                      Name: email,
-                    },
-                  ],
-                  Subject: "Welcome to shopers",
-                  TextPart: "welcome to shopers",
-                  HTMLPart: "<strong>Happy Shoping</strong>",
+                  Email: email,
+                  Name: email,
                 },
               ],
-            })
-            .then((result) => {
-              // console.log(result.header);
-            })
-            .catch((err) => {
-              console.log(err);
-            });
-          res.redirect("/login");
+              Subject: "Welcome to shopers",
+              TextPart: "welcome to shopers",
+              HTMLPart: "<strong>Happy Shoping</strong>",
+            },
+          ],
+        })
+        .then((result) => {
+          // console.log(result.header);
         })
         .catch((err) => {
           console.log(err);
         });
+      res.redirect("/login");
     })
     .catch((err) => {
       console.log(err);
