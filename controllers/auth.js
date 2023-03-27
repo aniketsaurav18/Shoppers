@@ -124,8 +124,9 @@ exports.postLogin = (req, res, next) => {
         });
     })
     .catch((err) => {
-      console.log(err);
-      res.redirect("/login");
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
 
@@ -190,14 +191,16 @@ exports.postSignup = (req, res, next) => {
       res.redirect("/login");
     })
     .catch((err) => {
+      console.log("mail dont get sent");
       console.log(err);
     });
 };
 
 exports.postLogout = (req, res, next) => {
   req.session.destroy((err) => {
-    console.log(err);
-    res.redirect("/");
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   });
 };
 
