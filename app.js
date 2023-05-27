@@ -74,6 +74,9 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
+  /*check if req has any user object in it. if there is not any user object than
+  it make sure that to put user into "req.user" by retreving the user from the database.
+  */
   if (!req.session.user) {
     return next();
   }

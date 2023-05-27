@@ -1,25 +1,9 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
-// const nodemailer = require("nodemailer");
-const mailjet = require("node-mailjet");
 const crypto = require("crypto");
 const { validationResult } = require("express-validator/check");
+const { mailHandler } = require("../util/mailhandler");
 
-//mailjet connection to api
-const Mail_jet = mailjet.apiConnect(
-  "03dde369a9176b282551f50ce1e15db1",
-  "d71edcb03be61c18096112b691c34392"
-);
-
-/*
---- sendgrid requirement and apikeys ---
-const sendgridTrasnport = require("@sendgrid/mail");
-sendgridTrasnport.setApiKey(
-  "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"
-);
-const second_api_key =
-  "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";
-*/
 exports.getLogin = (req, res, next) => {
   let message = req.flash("error");
   if (message.length > 0) {
@@ -132,7 +116,7 @@ exports.postLogin = (req, res, next) => {
 
 exports.postSignup = (req, res, next) => {
   const email = req.body.email;
-  console.log(email);
+  // console.log(email);
   const password = req.body.password;
   const confirmPassword = req.body.confirmPassword;
   const error = validationResult(req);
@@ -162,32 +146,7 @@ exports.postSignup = (req, res, next) => {
     })
     .then((result) => {
       //sending email (needs work)
-      Mail_jet.post("send", { version: "v3.1" })
-        .request({
-          Messages: [
-            {
-              From: {
-                Email: "mailittoaniket@gmail.com",
-                Name: "Shopers",
-              },
-              To: [
-                {
-                  Email: email,
-                  Name: email,
-                },
-              ],
-              Subject: "Welcome to shopers",
-              TextPart: "welcome to shopers",
-              HTMLPart: "<strong>Happy Shoping</strong>",
-            },
-          ],
-        })
-        .then((result) => {
-          // console.log(result.header);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+      mailHandler(email);
       res.redirect("/login");
     })
     .catch((err) => {
