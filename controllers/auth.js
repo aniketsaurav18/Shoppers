@@ -1,8 +1,11 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const { validationResult } = require("express-validator/check");
-const { mailHandler } = require("../util/mailhandler");
+const { validationResult } = require("express-validator");
+const {
+  mailHandler,
+  mailHandlerResetPassword,
+} = require("../util/mailhandler");
 
 exports.getLogin = (req, res, next) => {
   let message = req.flash("error");
@@ -196,36 +199,7 @@ exports.postReset = (req, res, next) => {
       })
       .then((result) => {
         res.redirect("/");
-        Mail_jet.post("send", { version: "v3.1" })
-          .request({
-            Messages: [
-              {
-                From: {
-                  Email: "mailittoaniket@gmail.com",
-                  Name: "Shopers",
-                },
-                To: [
-                  {
-                    Email: req.body.email,
-                    Name: req.body.email,
-                  },
-                ],
-                Subject: "Reset password",
-                TextPart: "Here is your OTP for reseting password",
-                HTMLPart: `
-                <p>You requested a password reset</p>
-                <p>Click this <a href = "http://localhost:3000/reset/${token}">link</a> to set a new password</p>
-                `,
-              },
-            ],
-          })
-          .then((result) => {
-            // console.log(result.header);
-          })
-          .catch((err) => {
-            console.log("email error");
-            console.log(err);
-          });
+        mailHandlerResetPassword(req.body.email, token);
       })
       .catch((err) => {
         console.log(err);

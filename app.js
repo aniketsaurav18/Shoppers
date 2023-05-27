@@ -103,6 +103,7 @@ app.use((error, req, res, next) => {
   console.log(error);
   res.redirect("/500");
 });
+mongoose.set("strictQuery", false);
 
 mongoose
   .connect(MONGODB_URL)
