@@ -1,4 +1,7 @@
 const path = require("path");
+const fs = require("fs");
+const https = require("https");
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const multer = require("multer");
@@ -7,11 +10,14 @@ const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
 const csrf = require("csurf");
 const flash = require("connect-flash");
+require("dotenv").config();
+const helmet = require("helmet");
+const compression = require("compression");
+const morgan = require("morgan");
 
 const errorController = require("./controllers/error");
 const User = require("./models/user");
-const MONGODB_URL =
-  "mongodb+srv://aniketsaurav:Aniket%232486@cluster0.xxs8c7n.mongodb.net/shop?retryWrites=true&w=majority";
+const MONGODB_URL = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@cluster0.xxs8c7n.mongodb.net/${process.env.MONGODB_DEFAULT_DATABASE}?retryWrites=true&w=majority`;
 const app = express();
 const store = new MongoDBStore({
   uri: MONGODB_URL,
@@ -19,6 +25,9 @@ const store = new MongoDBStore({
 });
 
 const csrfProtection = csrf();
+
+// const privateKey = fs.readFileSync("server.key");
+// const certificate = fs.readFileSync("server.cert");
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -49,6 +58,18 @@ app.set("views", "views");
 const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
 const authRoutes = require("./routes/auth");
+
+//writes logs into access.log file and flags:a means append which means write at the end of the file and not overwrite.
+const accessLogStream = fs.createWriteStream(
+  path.join(__dirname, "access.log"),
+  { flags: "a" }
+);
+
+app.use(helmet());
+app.use(compression());
+
+//morgan is used to log activities on server.
+app.use(morgan("combined", { stream: accessLogStream }));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(
@@ -109,7 +130,10 @@ mongoose.set("strictQuery", false);
 mongoose
   .connect(MONGODB_URL)
   .then((result) => {
-    app.listen(3000);
+    // https
+    //   .createServer({ key: privateKey, cert: certificate }, app)
+    //   .listen(process.env.PORT || 3000);
+    app.listen(process.env.PORT || 3000);
   })
   .catch((err) => {
     console.log(err);
